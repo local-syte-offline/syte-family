@@ -3,171 +3,229 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CyberOS Adaptive Hub</title>
+    <title>ULTRA HUB v4.0</title>
     <style>
         :root {
-            --p: #00f2ff; --bg: #010101; --card: rgba(255,255,255,0.05); --text: #fff; --batt: #4cd964;
+            --p: #00f2ff; --bg: #050505; --glass: rgba(255, 255, 255, 0.07); --text: #ffffff;
         }
         body.light {
-            --p: #0071e3; --bg: #f5f5f7; --card: #ffffff; --text: #1d1d1f;
+            --p: #0071e3; --bg: #f5f5f7; --glass: rgba(255, 255, 255, 0.8); --text: #1d1d1f;
         }
         
-        body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; margin: 0; transition: 0.5s; overflow: hidden; }
-        #canvas { position: fixed; inset: 0; z-index: -1; opacity: 0.3; display: none; }
-        #canvas.active { display: block; }
+        body { 
+            background: var(--bg); color: var(--text); 
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
+            margin: 0; transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            height: 100vh; display: flex; flex-direction: column;
+        }
 
-        nav { display: flex; gap: 5px; padding: 10px; background: rgba(0,0,0,0.8); backdrop-filter: blur(15px); border-bottom: 1px solid var(--p); overflow-x: auto; }
-        nav button { background: transparent; border: 1px solid var(--p); color: var(--p); padding: 8px 15px; border-radius: 20px; cursor: pointer; font-size: 11px; font-weight: bold; }
+        /* Анимированный фон */
+        #bg-canvas { position: fixed; inset: 0; z-index: -1; opacity: 0.3; pointer-events: none; }
+
+        /* Навигация Apple-style */
+        nav { 
+            display: flex; justify-content: center; gap: 15px; padding: 15px; 
+            background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(20px); 
+            border-bottom: 1px solid var(--p); flex-wrap: wrap;
+        }
+        nav button { 
+            background: var(--glass); border: 1px solid var(--p); color: var(--p); 
+            padding: 12px 24px; border-radius: 15px; cursor: pointer; 
+            font-weight: bold; transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        nav button:hover { transform: scale(1.1); box-shadow: 0 0 20px var(--p); background: var(--p); color: #000; }
+
+        /* Контент на весь экран */
+        section { 
+            display: none; padding: 30px; max-width: 1200px; width: 100%; margin: 0 auto; 
+            box-sizing: border-box; flex-grow: 1; overflow-y: auto;
+        }
+        section.active { display: block; animation: appleAppear 0.6s forwards; }
         
-        section { display: none; height: calc(100vh - 60px); padding: 20px; box-sizing: border-box; overflow-y: auto; }
-        section.active { display: block; }
+        @keyframes appleAppear {
+            from { opacity: 0; transform: translateY(40px) scale(0.98); filter: blur(10px); }
+            to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+        }
 
-        .card { background: var(--card); border: 1px solid rgba(128,128,128,0.2); padding: 20px; border-radius: 20px; margin-bottom: 20px; position: relative; }
+        .card { 
+            background: var(--glass); backdrop-filter: blur(30px); 
+            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 30px; 
+            padding: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); margin-bottom: 25px;
+        }
+
+        /* Элементы управления */
+        .battery-ico { width: 40px; height: 20px; border: 2px solid var(--text); border-radius: 6px; position: relative; display: inline-block; }
+        .battery-level { height: 100%; background: #4cd964; width: 0%; transition: 1s; }
         
-        /* ИНДИКАТОР ЗАРЯДА iOS Style */
-        .battery-ico { width: 35px; height: 18px; border: 2px solid var(--text); border-radius: 4px; position: relative; display: inline-block; vertical-align: middle; }
-        .battery-ico:after { content: ''; position: absolute; right: -5px; top: 4px; width: 3px; height: 6px; background: var(--text); border-radius: 0 2px 2px 0; }
-        .battery-level { height: 100%; background: var(--batt); width: 0%; transition: 0.5s; }
+        iframe { width: 100%; height: 500px; border-radius: 20px; border: 1px solid var(--p); filter: invert(var(--inv, 0)); }
+        
+        .crypto-tag { display: inline-block; padding: 10px 20px; border: 1px solid var(--p); border-radius: 12px; margin: 5px; font-weight: bold; }
 
-        select, .action { width: 100%; padding: 12px; margin-top: 10px; border-radius: 12px; border: 1px solid var(--p); background: transparent; color: var(--text); font-weight: bold; cursor: pointer; }
+        select, input, .btn-action { 
+            width: 100%; padding: 15px; margin-top: 15px; border-radius: 15px; 
+            border: 1px solid var(--p); background: rgba(0,0,0,0.2); color: var(--text); font-size: 16px;
+        }
     </style>
 </head>
 <body id="b">
 
-<canvas id="canvas"></canvas>
+<canvas id="bg-canvas"></canvas>
 
 <nav>
     <button onclick="st('home')">CORE</button>
-    <button onclick="st('media')">MEDIA</button>
     <button onclick="st('radar')">RADAR</button>
+    <button onclick="st('media')">MEDIA</button>
+    <button onclick="st('games')">GAMES</button>
     <button onclick="st('settings')">SETTINGS</button>
 </nav>
 
 <!-- CORE -->
 <section id="home" class="active">
     <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div id="sys-time" style="font-weight: bold; font-size: 20px;">00:00:00</div>
-            <div>
-                <span id="perc" style="font-size: 12px; margin-right: 5px;">--%</span>
-                <div class="battery-ico"><div id="blevel" class="battery-level"></div></div>
-            </div>
+        <div style="display: flex; justify-content: space-between;">
+            <div id="sys-time" style="font-size: 32px; font-weight: 800;">00:00:00</div>
+            <div class="battery-ico"><div id="blevel" class="battery-level"></div></div>
         </div>
-        <h1 id="greet" style="font-size: 2.5rem; margin-top: 20px;">Cyber Hub</h1>
-        <p id="weather">📡 Ожидание данных со спутника...</p>
+        <h1 style="font-size: 48px; background: linear-gradient(to right, var(--p), #fff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">SYSTEM ONLINE</h1>
+        <div id="weather" style="font-size: 18px; opacity: 0.8;">📡 Спутниковая связь установлена...</div>
+        <div style="margin-top: 20px;">
+            <div class="crypto-tag">BTC: <span id="btc">...</span></div>
+            <div class="crypto-tag">ETH: <span id="eth">...</span></div>
+        </div>
     </div>
 </section>
 
-<!-- MEDIA -->
+<!-- REAL RADAR -->
+<section id="radar">
+    <div class="card">
+        <h3>REAL-TIME FLIGHTRADAR24</h3>
+        <iframe src="https://www.flightradar24.com"></iframe>
+    </div>
+</section>
+
+<!-- MEDIA & FILES -->
 <section id="media">
     <div class="card">
-        <h3>GLOBAL RADIO PLAYER</h3>
-        <p style="font-size: 12px; opacity: 0.6;">Лоу-фай поток для работы в терминале</p>
-        <audio id="radio" controls style="width: 100%; filter: invert(var(--inv, 0));">
-            <source src="http://icecast.somafm.com" type="audio/mpeg">
+        <h3>OFFLINE PLAYER</h3>
+        <input type="file" id="f-in" onchange="loadMedia(event)" style="display:none">
+        <button class="btn-action" onclick="document.getElementById('f-in').click()">📂 ОТКРЫТЬ ФОТО/ВИДЕО</button>
+        <video id="v-view" controls style="width:100%; display:none; margin-top:20px; border-radius:15px;"></video>
+        <img id="i-view" style="width:100%; display:none; margin-top:20px; border-radius:15px;">
+        <hr border="0" style="margin: 30px 0; border-top: 1px solid var(--p);">
+        <h3>RADIO LO-FI</h3>
+        <audio id="radio" controls style="width:100%; filter: invert(var(--inv, 0));">
+            <source src="http://icecast.somafm.com">
         </audio>
-        <button class="action" onclick="document.getElementById('radio').play()">PLAY STREAM</button>
     </div>
 </section>
 
-<!-- RADAR -->
-<section id="radar">
-    <iframe id="ifr" src="https://www.flightradar24.com" style="width:100%; height:80vh; border:none; border-radius:25px;"></iframe>
+<!-- GAMES -->
+<section id="games">
+    <div class="card" style="text-align: center;">
+        <h2>2048 & CLICKER</h2>
+        <div id="g2048" style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px; width:300px; margin:20px auto; background:rgba(0,0,0,0.5); padding:10px; border-radius:15px; border:1px solid var(--p);"></div>
+        <button class="btn-action" onclick="addClick()">КЛИКНУТЬ (СЧЕТ: <span id="score">0</span>)</button>
+    </div>
 </section>
 
 <!-- SETTINGS -->
 <section id="settings">
     <div class="card">
-        <h3>КОНФИГУРАЦИЯ</h3>
-        
-        <label>Тема системы:</label>
-        <select id="theme-select" onchange="applySettings()">
-            <option value="auto">Adaptive (iOS Mode)</option>
-            <option value="dark">Dark (Cyber)</option>
-            <option value="light">Light (Apple)</option>
+        <h3>SETTINGS CONFIG</h3>
+        <label>Appearance:</label>
+        <select id="t-select" onchange="apply()">
+            <option value="auto">Adaptive (Time Based)</option>
+            <option value="dark">Cyber Dark</option>
+            <option value="light">Apple Light</option>
         </select>
-
-        <label style="display:block; margin-top:15px;">Регион сканирования:</label>
-        <select id="tz-select" onchange="applySettings()">
+        <label style="display:block; margin-top:20px;">Timezone:</label>
+        <select id="tz-select" onchange="apply()">
             <option value="Europe/Minsk">Минск (GMT+3)</option>
             <option value="Asia/Dubai">Дубай (GMT+4)</option>
             <option value="America/New_York">Нью-Йорк (GMT-5)</option>
         </select>
-
-        <button class="action" id="viz-btn" style="margin-top:20px;" onclick="toggleViz()">SOUNDSCAPE: OFF</button>
+        <button class="btn-action" onclick="toggleViz()">SOUNDSCAPE EFFECTS: <span id="s-stat">OFF</span></button>
     </div>
 </section>
 
 <script>
-    let vizEnabled = false;
-
+    let viz = false;
     function st(id) {
         document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
         document.getElementById(id).classList.add('active');
     }
 
     function toggleViz() {
-        vizEnabled = !vizEnabled;
-        const c = document.getElementById('canvas'), b = document.getElementById('viz-btn');
-        c.style.display = vizEnabled ? 'block' : 'none';
-        b.innerText = vizEnabled ? "SOUNDSCAPE: ON" : "SOUNDSCAPE: OFF";
+        viz = !viz;
+        document.getElementById('s-stat').innerText = viz ? "ON" : "OFF";
     }
 
-    function applySettings() {
-        const theme = document.getElementById('theme-select').value;
+    function apply() {
+        const t = document.getElementById('t-select').value;
         const tz = document.getElementById('tz-select').value;
-        const body = document.getElementById('b');
+        localStorage.setItem('cfg_t', t); localStorage.setItem('cfg_tz', tz);
         
-        localStorage.setItem('h_theme', theme);
-        localStorage.setItem('h_tz', tz);
-
-        let hour = new Date(new Date().toLocaleString("en-US", {timeZone: tz})).getHours();
-        
-        if (theme === 'light' || (theme === 'auto' && hour >= 7 && hour < 19)) {
-            body.className = 'light';
-            body.style.setProperty('--inv', '1');
+        let h = new Date(new Date().toLocaleString("en-US", {timeZone: tz})).getHours();
+        const b = document.getElementById('b');
+        if (t === 'light' || (t === 'auto' && h >= 7 && h < 19)) {
+            b.className = 'light'; b.style.setProperty('--inv', '1');
         } else {
-            body.className = '';
-            body.style.setProperty('--inv', '0');
+            b.className = ''; b.style.setProperty('--inv', '0');
         }
     }
 
-    // iOS Battery Logic
-    navigator.getBattery?.().then(batt => {
-        const up = () => {
-            const lvl = batt.level * 100;
-            document.getElementById('blevel').style.width = lvl + '%';
-            document.getElementById('perc').innerText = Math.round(lvl) + '%';
-            let color = '#4cd964'; // green
-            if(lvl < 21) color = '#ff3b30'; // red
-            else if(lvl < 51) color = '#ffcc00'; // yellow
-            document.documentElement.style.setProperty('--batt', color);
-        };
-        batt.onlevelchange = up; up();
+    function loadMedia(e) {
+        const file = e.target.files[0];
+        const url = URL.createObjectURL(file);
+        const v = document.getElementById('v-view'), i = document.getElementById('i-view');
+        v.style.display = i.style.display = 'none';
+        if (file.type.startsWith('video')) { v.src = url; v.style.display = 'block'; }
+        else { i.src = url; i.style.display = 'block'; }
+    }
+
+    let clicks = localStorage.getItem('clicks') || 0;
+    function addClick() { clicks++; document.getElementById('score').innerText = clicks; localStorage.setItem('clicks', clicks); }
+
+    async function getCrypto() {
+        try {
+            const r = await fetch('https://api.coingecko.com');
+            const d = await r.json();
+            document.getElementById('btc').innerText = '$' + d.bitcoin.usd;
+            document.getElementById('eth').innerText = '$' + d.ethereum.usd;
+        } catch(e) {}
+    }
+
+    navigator.getBattery?.().then(bt => {
+        const u = () => document.getElementById('blevel').style.width = (bt.level*100) + '%';
+        bt.onlevelchange = u; u();
     });
 
     setInterval(() => {
-        const tz = localStorage.getItem('h_tz') || 'Europe/Minsk';
+        const tz = localStorage.getItem('cfg_tz') || 'Europe/Minsk';
         document.getElementById('sys-time').innerText = new Date().toLocaleTimeString('ru-RU', {timeZone: tz});
     }, 1000);
 
-    // Фоновый эффект (Cyber Rain)
-    const canvas = document.getElementById('canvas'), ctx = canvas.getContext('2d');
+    const canvas = document.getElementById('bg-canvas'), ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth; canvas.height = window.innerHeight;
     function draw() {
-        if(vizEnabled) {
+        if(viz) {
             ctx.fillStyle = 'rgba(0,0,0,0.1)'; ctx.fillRect(0,0,canvas.width, canvas.height);
             ctx.fillStyle = '#00f2ff';
-            ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 2, 2);
+            ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 3, 3);
         }
         requestAnimationFrame(draw);
     }
     draw();
+    
+    // Инициализация 2048
+    const g = document.getElementById('g2048');
+    for(let i=0; i<16; i++) g.innerHTML += `<div style="height:60px; background:rgba(255,255,255,0.1); border-radius:10px; display:flex; align-items:center; justify-content:center;">${Math.random()>0.8?'2':''}</div>`;
 
     window.onload = () => {
-        document.getElementById('theme-select').value = localStorage.getItem('h_theme') || 'auto';
-        document.getElementById('tz-select').value = localStorage.getItem('h_tz') || 'Europe/Minsk';
-        applySettings();
+        document.getElementById('t-select').value = localStorage.getItem('cfg_t') || 'auto';
+        document.getElementById('tz-select').value = localStorage.getItem('cfg_tz') || 'Europe/Minsk';
+        document.getElementById('score').innerText = clicks;
+        apply(); getCrypto();
     };
 </script>
 </body>
